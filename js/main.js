@@ -1,9 +1,5 @@
-let filtered = []
-let filteredHistory = []
-let flIndex = -1
-let isRemoved = false
-let actualWord = 0;
-let tempItems
+let words = []
+let tempItems = []
 class Data {
     async getData() {
         try {
@@ -100,40 +96,18 @@ class UI {
 
             })
         }
-        static filterCategory(items){
-                let words = UI.getWords();
-                actualWord = words.length-1
-                if(filteredHistory.length === 0){
-                    tempItems = items
-                    
-                }else{
-                    if(filteredHistory[flIndex] !== undefined){
-                        tempItems = filteredHistory[flIndex]
-                     
-                    }
-                }
-                if(isRemoved === false){
-                 tempItems = tempItems.filter(({role,level,languages,tools})=>{
-                    return tools.includes(words[actualWord]) ||
-                    role.includes(words[actualWord]) ||
-                    level.includes(words[actualWord]) ||
-                    languages.includes(words[actualWord])
-                })
-                    filteredHistory.push(tempItems)
-                    flIndex = flIndex + 1
-                   
-                }
-                
-                    if(filteredHistory.length >= 0 && filteredHistory[flIndex] !== undefined){
-                        UI.showData(filteredHistory[flIndex])
-                    }else if(flIndex <= 1){
-                        flIndex = -1
-                        filteredHistory = []
-                        let data = new Data
-                        data.getData().then(items=> UI.setFunctionality(items))
-                    }
-
-               
+        static filterCategory(items,words){
+            if(words.length > 0){
+                for(let word of words){
+                    items = items.filter(({role,level,languages,tools})=>{
+                        return tools.includes(word) ||
+                        role.includes(word) ||
+                        level.includes(word) ||
+                        languages.includes(word)
+                    })
+                }    
+            }
+            UI.showData(items)       
                 let footer__bandges = document.querySelectorAll('.app__card-footer-badge')  
                 footer__bandges.forEach(bandge=>{
                 bandge.addEventListener('click',UI.addSearchItem)
@@ -141,12 +115,10 @@ class UI {
             }
         
         static getWords(){
-            let words = []
             let appSearchBandge = document.querySelectorAll('.app__search-bandge-text');
             appSearchBandge.forEach(bandge =>{
                 words.push(bandge.textContent)
             })
-            return words
         }
         static addSearchItem(e){
             let searchContainer = document.querySelector('.app__search')
@@ -160,37 +132,24 @@ class UI {
             searchBandgesDelete.forEach(bandge=>{
                 bandge.onclick = function(e) { UI.removeSearchBandge(e)};
             })
+            let word = e.target.textContent
+            words.push(word)
             UI.reloadWrapper()
-            isRemoved = false
-            let data = new Data();
-            data.getData().then(items=>{
-                if(filtered.length === 0){
-                    UI.filterCategory(items)
-                }else{
-                    UI.filterCategory(filtered)
-                }
-            })
+            UI.filterCategory(tempItems,words)
+           
         }
         static removeSearchBandge(e){ 
             e.target.parentElement.remove();
+            let word = e.target.previousElementSibling.textContent
+            words = words.filter(item=>item !== word)
             UI.reloadWrapper()
-           filtered.pop()
-         
-               flIndex = flIndex - 1
-         
-            isRemoved = true
-            let data = new Data();
-            data.getData().then(items=>{
-                    UI.filterCategory(items)
-            })
-         
+            UI.filterCategory(tempItems,words)
         }
         static clearSearch(){
             let searchContainer = document.querySelector('.app__search')
             searchContainer.innerHTML = ''
             UI.reloadWrapper()
-            let data = new Data()
-            data.getData().then(items => UI.setFunctionality(items))
+            UI.setFunctionality(tempItems)
         }
     }
 
@@ -199,5 +158,6 @@ class UI {
         let data = new Data();
         data.getData().then(items=>{
             UI.setFunctionality(items)
+            tempItems = [...items]
         });
     })
